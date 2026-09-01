@@ -1324,7 +1324,7 @@
               '<h3>NABL Scope of Accreditation</h3>' +
               '<p>Our full scope of accreditation (Certificate No. CC-4253, ISO/IEC 17025:2017, valid 31/01/2025 to 30/01/2029), listing every parameter, range and measurement capability we are accredited for.</p>' +
             '</div>' +
-            '<a href="' + SCOPE_PDF + '" class="btn btn-primary" target="_blank" rel="noopener" download="Orient-Equipment-Scope-of-Accreditation.pdf">View / Download Scope PDF</a>' +
+            '<a href="' + SCOPE_PDF + '" id="scopePdfLink" class="btn btn-primary" rel="noopener">View / Download Scope PDF</a>' +
           '</div>'));
         return box;
       }
@@ -1439,6 +1439,30 @@
       if (/^#page=home/.test(location.hash || "")) window.scrollTo(0, 0);
     }
   }
+
+  /* Mobile browsers (especially iOS Safari and in-app browsers such as
+     WhatsApp/Instagram) frequently fail to open a large data: URI when it
+     also carries a download attribute and target="_blank" — the tap does
+     nothing. Converting the same base64 payload to a Blob and opening that
+     via window.open() is opened as a normal, same-gesture navigation that
+     every mobile browser's built-in PDF viewer handles reliably. */
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest ? e.target.closest("#scopePdfLink") : null;
+    if (!a) return;
+    e.preventDefault();
+    try {
+      var base64 = SCOPE_PDF.split(",")[1];
+      var binary = atob(base64);
+      var bytes = new Uint8Array(binary.length);
+      for (var i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      var blobUrl = URL.createObjectURL(new Blob([bytes], { type: "application/pdf" }));
+      var win = window.open(blobUrl, "_blank");
+      if (!win) location.href = blobUrl;
+      setTimeout(function () { URL.revokeObjectURL(blobUrl); }, 60000);
+    } catch (err) {
+      window.open(SCOPE_PDF, "_blank");
+    }
+  });
 
   /* From a sub-page, a header link must return home *and* scroll to its section */
   document.addEventListener("click", function (e) {
